@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nashr qilish</title>
+<style>
+  :root {
+    --paper: #f7f4ee;
+    --ink: #1a1917;
+    --ink-soft: #57534a;
+    --stamp: #a8391f;
+    --line: #ddd6c7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Iowan Old Style', 'Georgia', 'Source Serif Pro', serif;
+    margin: 0;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 64px 24px 100px; }
+  .brand {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 40px;
+  }
+  h1 { font-size: 34px; font-weight: 600; margin: 0 0 6px; }
+  p.sub { color: var(--ink-soft); margin: 0 0 36px; font-size: 16px; }
+  input[type=text], textarea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    font-family: inherit;
+    color: var(--ink);
+    padding: 10px 2px;
+    outline: none;
+  }
+  input[type=text] { font-size: 30px; font-weight: 600; margin-bottom: 24px; }
+  input[type=text]:focus, textarea:focus { border-color: var(--stamp); }
+  textarea { font-size: 18px; min-height: 340px; resize: vertical; line-height: 1.8; }
+  button {
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    background: var(--stamp);
+    color: var(--paper);
+    border: none;
+    padding: 12px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 24px;
+  }
+  button:hover { opacity: 0.9; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 6px; }
+  .toolbar button {
+    margin-top: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+  }
+  .toolbar button:hover { border-color: var(--stamp); color: var(--stamp); }
+  .toolbar input[type=file] { display: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">o'z-nashriyot</div>
+    <h1>Bir zumda nashr qiling</h1>
+    <p class="sub">Ro'yxatdan o'tish shart emas. Sarlavha va matn yozing — havola olasiz.</p>
+    <form method="POST" action="/create">
+      <input type="text" name="title" placeholder="Sarlavha" required autofocus>
+      <div class="toolbar">
+        <button type="button" onclick="wrapSel('**')"><b>B</b></button>
+        <button type="button" onclick="wrapSel('*')"><i>I</i></button>
+        <button type="button" onclick="document.getElementById('imgInput').click()">Rasm</button>
+        <input type="file" id="imgInput" accept="image/*">
+      </div>
+      <textarea name="content" id="content" placeholder="Matningizni shu yerga yozing... (**qalin**, *kursiv*, # Sarlavha)" required></textarea>
+      <button type="submit">Nashr qilish</button>
+    </form>
+  </div>
+  <script>
+    function wrapSel(mark) {
+      const ta = document.getElementById('content');
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      const selected = ta.value.slice(start, end) || 'matn';
+      ta.value = ta.value.slice(0, start) + mark + selected + mark + ta.value.slice(end);
+      ta.focus();
+      ta.selectionStart = start + mark.length;
+      ta.selectionEnd = start + mark.length + selected.length;
+    }
+    document.getElementById('imgInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('image', file);
+      const btn = e.target.previousElementSibling;
+      const original = btn.textContent;
+      btn.textContent = 'Yuklanmoqda...';
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.url) {
+          const ta = document.getElementById('content');
+          const pos = ta.selectionStart;
+          const insert = '\n![](' + data.url + ')\n';
+          ta.value = ta.value.slice(0, pos) + insert + ta.value.slice(pos);
+        } else {
+          alert(data.error || 'Yuklashda xatolik');
+        }
+      } catch (err) {
+        alert('Yuklashda xatolik yuz berdi');
+      }
+      btn.textContent = original;
+      e.target.value = '';
+    });
+  </script>
+</body>
+</html>
