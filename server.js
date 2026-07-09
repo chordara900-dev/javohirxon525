@@ -345,10 +345,6 @@ ${baseStyle}
     <div class="meta">${date}</div>
     <div class="article">${contentToHtml(article.content)}</div>
     ${isOwner ? `
-      <div class="share-box">
-        <b>Ulashish uchun havola (o'qish uchun, token shart emas):</b>
-        sizning-domeningiz.uz/${slug}
-      </div>
       <a class="btn" href="/${slug}/edit/${article.editToken}">Tahrirlash</a>
     ` : ''}
   </div>
